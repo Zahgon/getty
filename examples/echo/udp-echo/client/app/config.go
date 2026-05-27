@@ -18,18 +18,7 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"path"
 	"time"
-)
-
-import (
-	config "github.com/koding/multiconfig"
-)
-
-import (
-	log "github.com/AlexStocks/getty/util"
 )
 
 const (
@@ -90,56 +79,10 @@ type (
 	}
 )
 
-func initConf() {
-	var (
-		err      error
-		confFile string
-	)
+func initConf() { _ = "STUB: not implemented"; return }
 
-	// configure
-	confFile = os.Getenv(APP_CONF_FILE)
-	if confFile == "" {
-		panic("application configure file name is nil")
-	}
-	if path.Ext(confFile) != ".toml" {
-		panic(fmt.Sprintf("application configure file name{%v} suffix must be .toml", confFile))
-	}
-	conf = new(Config)
-	config.MustLoadWithPath(confFile, conf)
+// configure
 
-	conf.heartbeatPeriod, err = time.ParseDuration(conf.HeartbeatPeriod)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(HeartbeatPeroid{%#v}) = error{%v}", conf.HeartbeatPeriod, err))
-	}
-	conf.sessionTimeout, err = time.ParseDuration(conf.SessionTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(SessionTimeout{%#v}) = error{%v}", conf.SessionTimeout, err))
-	}
-	conf.failFastTimeout, err = time.ParseDuration(conf.FailFastTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(FailFastTimeout{%#v}) = error{%v}", conf.FailFastTimeout, err))
-	}
-	conf.GettySessionParam.udpReadTimeout, err = time.ParseDuration(conf.GettySessionParam.UdpReadTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(UdpReadTimeout{%#v}) = error{%v}", conf.GettySessionParam.UdpReadTimeout, err))
-	}
-	conf.GettySessionParam.udpWriteTimeout, err = time.ParseDuration(conf.GettySessionParam.UdpWriteTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(UdpWriteTimeout{%#v}) = error{%v}", conf.GettySessionParam.UdpWriteTimeout, err))
-	}
-	conf.GettySessionParam.waitTimeout, err = time.ParseDuration(conf.GettySessionParam.WaitTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(WaitTimeout{%#v}) = error{%v}", conf.GettySessionParam.WaitTimeout, err))
-	}
-	// gxlog.Info("config{%#v}\n", conf)
+// gxlog.Info("config{%#v}\n", conf)
 
-	// log
-	confFile = os.Getenv(APP_LOG_CONF_FILE)
-	if confFile == "" {
-		panic("log configure file name is nil")
-	}
-	if path.Ext(confFile) != ".xml" {
-		panic(fmt.Sprintf("log configure file name{%v} suffix must be .xml", confFile))
-	}
-	log.Info("config{%#v}", conf)
-}
+// log

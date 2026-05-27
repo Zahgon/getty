@@ -98,76 +98,61 @@ func init() {
 
 // SetLogger customize yourself logger.
 func SetLogger(logger Logger) {
-	log = logger
+	_ = "STUB: not implemented"
+
+	// GetLogger get getty logger
+	return
 }
 
-// GetLogger get getty logger
 func GetLogger() Logger {
-	return log
+	_ = "STUB: not implemented"
+
+	// SetLoggerLevel set logger level
+	return *new(Logger)
 }
 
-// SetLoggerLevel set logger level
-func SetLoggerLevel(level LoggerLevel) error {
-	var err error
-	zapLoggerConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(level))
-	zapLogger, err = zapLoggerConfig.Build()
-	if err != nil {
-		return err
-	}
-	log = zapLogger.Sugar()
-	return nil
-}
+func SetLoggerLevel(level LoggerLevel) error { _ = "STUB: not implemented"; return nil }
 
 // SetLoggerCallerDisable disable caller info in production env for performance improve.
 // It is highly recommended that you execute this method in a production environment.
-func SetLoggerCallerDisable() error {
-	var err error
-	zapLoggerConfig.Development = false
-	zapLoggerConfig.DisableCaller = true
-	zapLogger, err = zapLoggerConfig.Build()
-	if err != nil {
-		return err
-	}
-	log = zapLogger.Sugar()
-	return nil
-}
+func SetLoggerCallerDisable() error { _ = "STUB: not implemented"; return nil }
 
 // Debug
 func Debug(args ...any) {
-	log.Debug(args...)
+	_ = "STUB: not implemented"
+
+	// Debugf
+	return
 }
 
-// Debugf
-func Debugf(template string, args ...any) {
-	log.Debugf(template, args...)
-}
+func Debugf(template string, args ...any) { _ = "STUB: not implemented"; return }
 
 // Info
 func Info(args ...any) {
-	log.Info(args...)
+	_ = "STUB: not implemented"
+
+	// Infof
+	return
 }
 
-// Infof
-func Infof(template string, args ...any) {
-	log.Infof(template, args...)
-}
+func Infof(template string, args ...any) { _ = "STUB: not implemented"; return }
 
 // Warn
 func Warn(args ...any) {
-	log.Warn(args...)
+	_ = "STUB: not implemented"
+
+	// Warnf
+	return
 }
 
-// Warnf
-func Warnf(template string, args ...any) {
-	log.Warnf(template, args...)
-}
+func Warnf(template string, args ...any) { _ = "STUB: not implemented"; return }
 
 // Error
 func Error(args ...any) {
-	log.Error(args...)
+	_ = "STUB: not implemented"
+
+	// Errorf
+	return
 }
 
-// Errorf
-func Errorf(template string, args ...any) {
-	log.Errorf(template, args...)
-}
+func Errorf(template string, args ...any) { _ = "STUB: not implemented"; return }

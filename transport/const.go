@@ -19,7 +19,6 @@ package getty
 
 import (
 	"compress/flate"
-	"strconv"
 )
 
 type (
@@ -60,14 +59,7 @@ var EndPointType_value = map[string]int32{
 	"WSS_SERVER":   9,
 }
 
-func (x EndPointType) String() string {
-	s, ok := EndPointType_name[int32(x)]
-	if ok {
-		return s
-	}
-
-	return strconv.Itoa(int(x))
-}
+func (x EndPointType) String() string { _ = "STUB: not implemented"; return "" }
 
 type CompressType int
 

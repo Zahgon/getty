@@ -18,32 +18,9 @@
 package getty
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
-	"fmt"
-	"math"
-	"net"
-	"os"
-	"strings"
 	"sync"
-	"sync/atomic"
-	"time"
-)
 
-import (
-	gxbytes "github.com/dubbogo/gost/bytes"
-	gxnet "github.com/dubbogo/gost/net"
 	gxsync "github.com/dubbogo/gost/sync"
-	gxtime "github.com/dubbogo/gost/time"
-
-	"github.com/gorilla/websocket"
-
-	perrors "github.com/pkg/errors"
-)
-
-import (
-	log "github.com/AlexStocks/getty/util"
 )
 
 const (
@@ -90,334 +67,51 @@ func (c *client) init(opts ...ClientOption) {
 	}
 }
 
-func newClient(t EndPointType, opts ...ClientOption) *client {
-	c := &client{
-		endPointID:   atomic.AddInt32(&clientID, 1),
-		endPointType: t,
-		done:         make(chan struct{}),
-	}
-
-	c.init(opts...)
-
-	if c.number <= 0 || c.addr == "" {
-		panic(fmt.Sprintf("client type:%s, @connNum:%d, @serverAddr:%s", t, c.number, c.addr))
-	}
-
-	c.ssMap = make(map[Session]struct{}, c.number)
-
-	return c
-}
+func newClient(t EndPointType, opts ...ClientOption) *client { _ = "STUB: not implemented"; return nil }
 
 // NewTCPClient builds a tcp client.
-func NewTCPClient(opts ...ClientOption) Client {
-	return newClient(TCP_CLIENT, opts...)
-}
+func NewTCPClient(opts ...ClientOption) Client { _ = "STUB: not implemented"; return *new(Client) }
 
 // NewUDPClient builds a connected udp client
-func NewUDPClient(opts ...ClientOption) Client {
-	return newClient(UDP_CLIENT, opts...)
-}
+func NewUDPClient(opts ...ClientOption) Client { _ = "STUB: not implemented"; return *new(Client) }
 
 // NewWSClient builds a ws client.
-func NewWSClient(opts ...ClientOption) Client {
-	c := newClient(WS_CLIENT, opts...)
-
-	if !strings.HasPrefix(c.addr, "ws://") {
-		panic(fmt.Sprintf("the prefix @serverAddr:%s is not ws://", c.addr))
-	}
-
-	return c
-}
+func NewWSClient(opts ...ClientOption) Client { _ = "STUB: not implemented"; return *new(Client) }
 
 // NewWSSClient function builds a wss client.
-func NewWSSClient(opts ...ClientOption) Client {
-	c := newClient(WSS_CLIENT, opts...)
+func NewWSSClient(opts ...ClientOption) Client { _ = "STUB: not implemented"; return *new(Client) }
 
-	if c.cert == "" {
-		panic(fmt.Sprintf("@cert:%s", c.cert))
-	}
-	if !strings.HasPrefix(c.addr, "wss://") {
-		panic(fmt.Sprintf("the prefix @serverAddr:%s is not wss://", c.addr))
-	}
+func (c *client) ID() EndPointID { _ = "STUB: not implemented"; return *new(EndPointID) }
 
-	return c
-}
+func (c *client) EndPointType() EndPointType { _ = "STUB: not implemented"; return *new(EndPointType) }
 
-func (c *client) ID() EndPointID {
-	return c.endPointID
-}
+func (c *client) dialTCP() Session { _ = "STUB: not implemented"; return *new(Session) }
 
-func (c *client) EndPointType() EndPointType {
-	return c.endPointType
-}
+func (c *client) dialUDP() Session { _ = "STUB: not implemented"; return *new(Session) }
 
-func (c *client) dialTCP() Session {
-	var (
-		err  error
-		conn net.Conn
-	)
+// check connection alive by write/read action
 
-	for {
-		if c.IsClosed() {
-			return nil
-		}
-		if c.sslEnabled {
-			if sslConfig, buildTlsConfErr := c.tlsConfigBuilder.BuildTlsConfig(); buildTlsConfErr == nil && sslConfig != nil {
-				d := &net.Dialer{Timeout: connectTimeout}
-				conn, err = tls.DialWithDialer(d, "tcp", c.addr, sslConfig)
-			}
-		} else {
-			conn, err = net.DialTimeout("tcp", c.addr, connectTimeout)
-		}
-		if err == nil && gxnet.IsSameAddr(conn.RemoteAddr(), conn.LocalAddr()) {
-			_ = conn.Close()
-			err = errSelfConnect
-		}
-		if err == nil {
-			return newTCPSession(conn, c)
-		}
+func (c *client) dialWS() Session { _ = "STUB: not implemented"; return *new(Session) }
 
-		log.Infof("net.DialTimeout(addr:%s, timeout:%v) = error:%+v", c.addr, connectTimeout, perrors.WithStack(err))
-		<-gxtime.After(connectInterval)
-	}
-}
+func (c *client) dialWSS() Session { _ = "STUB: not implemented"; return *new(Session) }
 
-func (c *client) dialUDP() Session {
-	var (
-		err       error
-		conn      *net.UDPConn
-		localAddr *net.UDPAddr
-		peerAddr  *net.UDPAddr
-		length    int
-		bufp      *[]byte
-		buf       []byte
-	)
+// dialer.EnableCompression = true
 
-	bufp = gxbytes.GetBytes(128)
-	defer gxbytes.PutBytes(bufp)
-	buf = *bufp
-	localAddr = &net.UDPAddr{IP: net.IPv4zero, Port: 0}
-	peerAddr, _ = net.ResolveUDPAddr("udp", c.addr)
-	for {
-		if c.IsClosed() {
-			return nil
-		}
-		conn, err = net.DialUDP("udp", localAddr, peerAddr)
-		if err == nil && gxnet.IsSameAddr(conn.RemoteAddr(), conn.LocalAddr()) {
-			_ = conn.Close()
-			err = errSelfConnect
-		}
-		if err != nil {
-			log.Warnf("net.DialTimeout(addr:%s, timeout:%v) = error:%+v", c.addr, perrors.WithStack(err))
-			<-gxtime.After(connectInterval)
-			continue
-		}
-
-		// check connection alive by write/read action
-		if err := conn.SetWriteDeadline(time.Now().Add(1e9)); err != nil {
-			log.Warnf("failed to set write deadline: %+v", err)
-		}
-		if length, err = conn.Write(connectPingPackage[:]); err != nil {
-			_ = conn.Close()
-			log.Warnf("conn.Write(%s) = {length:%d, err:%+v}", string(connectPingPackage), length, perrors.WithStack(err))
-			<-gxtime.After(connectInterval)
-			continue
-		}
-		if err := conn.SetReadDeadline(time.Now().Add(1e9)); err != nil {
-			log.Warnf("failed to set read deadline: %+v", err)
-		}
-		length, err = conn.Read(buf)
-		if netErr, ok := perrors.Cause(err).(net.Error); ok && netErr.Timeout() {
-			err = nil
-		}
-		if err != nil {
-			log.Infof("conn{%#v}.Read() = {length:%d, err:%+v}", conn, length, perrors.WithStack(err))
-			_ = conn.Close()
-			<-gxtime.After(connectInterval)
-			continue
-		}
-		return newUDPSession(conn, c)
-	}
-}
-
-func (c *client) dialWS() Session {
-	var (
-		err    error
-		dialer websocket.Dialer
-		conn   *websocket.Conn
-		ss     Session
-	)
-
-	dialer.EnableCompression = true
-	for {
-		if c.IsClosed() {
-			return nil
-		}
-		conn, _, err = dialer.Dial(c.addr, nil)
-		log.Infof("websocket.dialer.Dial(addr:%s) = error:%+v", c.addr, perrors.WithStack(err))
-		if err == nil && gxnet.IsSameAddr(conn.RemoteAddr(), conn.LocalAddr()) {
-			_ = conn.Close()
-			err = errSelfConnect
-		}
-		if err == nil {
-			ss = newWSSession(conn, c)
-			if ss.(*session).maxMsgLen > 0 {
-				conn.SetReadLimit(int64(ss.(*session).maxMsgLen))
-			}
-
-			return ss
-		}
-
-		log.Infof("websocket.dialer.Dial(addr:%s) = error:%+v", c.addr, perrors.WithStack(err))
-		<-gxtime.After(connectInterval)
-	}
-}
-
-func (c *client) dialWSS() Session {
-	var (
-		err      error
-		root     *x509.Certificate
-		roots    []*x509.Certificate
-		certPool *x509.CertPool
-		config   *tls.Config
-		dialer   websocket.Dialer
-		conn     *websocket.Conn
-		ss       Session
-	)
-
-	dialer.EnableCompression = true
-
-	config = &tls.Config{
-		InsecureSkipVerify: true,
-	}
-
-	if c.cert != "" {
-		certPEMBlock, err := os.ReadFile(c.cert)
-		if err != nil {
-			panic(fmt.Sprintf("os.ReadFile(cert:%s) = error:%+v", c.cert, perrors.WithStack(err)))
-		}
-
-		var cert tls.Certificate
-		for {
-			var certDERBlock *pem.Block
-			certDERBlock, certPEMBlock = pem.Decode(certPEMBlock)
-			if certDERBlock == nil {
-				break
-			}
-			if certDERBlock.Type == "CERTIFICATE" {
-				cert.Certificate = append(cert.Certificate, certDERBlock.Bytes)
-			}
-		}
-		config.Certificates = make([]tls.Certificate, 1)
-		config.Certificates[0] = cert
-	}
-
-	certPool = x509.NewCertPool()
-	for _, c := range config.Certificates {
-		roots, err = x509.ParseCertificates(c.Certificate[len(c.Certificate)-1])
-		if err != nil {
-			panic(fmt.Sprintf("error parsing server's root cert: %+v\n", perrors.WithStack(err)))
-		}
-		for _, root = range roots {
-			certPool.AddCert(root)
-		}
-	}
-	config.InsecureSkipVerify = true
-	config.RootCAs = certPool
-
-	// dialer.EnableCompression = true
-	dialer.TLSClientConfig = config
-	for {
-		if c.IsClosed() {
-			return nil
-		}
-		conn, _, err = dialer.Dial(c.addr, nil)
-		if err == nil && gxnet.IsSameAddr(conn.RemoteAddr(), conn.LocalAddr()) {
-			_ = conn.Close()
-			err = errSelfConnect
-		}
-		if err == nil {
-			ss = newWSSession(conn, c)
-			if ss.(*session).maxMsgLen > 0 {
-				conn.SetReadLimit(int64(ss.(*session).maxMsgLen))
-			}
-			ss.SetName(defaultWSSSessionName)
-
-			return ss
-		}
-
-		log.Infof("websocket.dialer.Dial(addr:%s) = error:%+v", c.addr, perrors.WithStack(err))
-		<-gxtime.After(connectInterval)
-	}
-}
-
-func (c *client) dial() Session {
-	switch c.endPointType {
-	case TCP_CLIENT:
-		return c.dialTCP()
-	case UDP_CLIENT:
-		return c.dialUDP()
-	case WS_CLIENT:
-		return c.dialWS()
-	case WSS_CLIENT:
-		return c.dialWSS()
-	}
-
-	return nil
-}
+func (c *client) dial() Session { _ = "STUB: not implemented"; return *new(Session) }
 
 func (c *client) GetTaskPool() gxsync.GenericTaskPool {
-	return c.tPool
+	_ = "STUB: not implemented"
+	return *new(gxsync.GenericTaskPool)
 }
 
-func (c *client) sessionNum() int {
-	var num int
+func (c *client) sessionNum() int { _ = "STUB: not implemented"; return 0 }
 
-	c.Lock()
-	for s := range c.ssMap {
-		if s.IsClosed() {
-			delete(c.ssMap, s)
-		}
-	}
-	num = len(c.ssMap)
-	c.Unlock()
+func (c *client) connect() { _ = "STUB: not implemented"; return }
 
-	return num
-}
+// client has been closed
 
-func (c *client) connect() {
-	var (
-		err error
-		ss  Session
-	)
-
-	for {
-		ss = c.dial()
-		if ss == nil {
-			// client has been closed
-			break
-		}
-		err = c.newSession(ss)
-		if err == nil {
-			ss.(*session).run()
-			c.Lock()
-			if c.ssMap == nil {
-				c.Unlock()
-				break
-			}
-			c.ssMap[ss] = struct{}{}
-			c.Unlock()
-			ss.SetAttribute(sessionClientKey, c)
-			ss.SetAttribute(ignoreReconnectKey, false)
-			break
-		}
-		// don't distinguish between tcp connection and websocket connection. Because
-		// gorilla/websocket/conn.go:(Conn)Close also invoke net.Conn.Close()
-		if cerr := ss.Conn().Close(); cerr != nil {
-			log.Warnf("failed to close conn: %+v", cerr)
-		}
-	}
-}
+// don't distinguish between tcp connection and websocket connection. Because
+// gorilla/websocket/conn.go:(Conn)Close also invoke net.Conn.Close()
 
 // there are two methods to keep connection pool. the first approach is like
 // redigo's lazy connection pool(https://github.com/gomodule/redigo/blob/master/redis/pool.go:),
@@ -426,76 +120,15 @@ func (c *client) connect() {
 // in regular time interval.
 // the active method maybe overburden the cpu slightly.
 // however, you can get a active tcp connection very quickly.
-func (c *client) RunEventLoop(newSession NewSessionCallback) {
-	c.Lock()
-	c.newSession = newSession
-	c.Unlock()
-	c.reConnect()
-}
+func (c *client) RunEventLoop(newSession NewSessionCallback) { _ = "STUB: not implemented"; return }
 
 // a for-loop connect to make sure the connection pool is valid
-func (c *client) reConnect() {
-	var (
-		sessionNum, reconnectAttempts int
-		maxReconnectInterval          int64
-	)
-	reconnectInterval := c.reconnectInterval
-	if reconnectInterval == 0 {
-		reconnectInterval = defaultReconnectInterval
-	}
-	maxReconnectAttempts := c.maxReconnectAttempts
-	if maxReconnectAttempts == 0 {
-		maxReconnectAttempts = defaultMaxReconnectAttempts
-	}
-	connPoolSize := c.number
-	for {
-		if c.IsClosed() {
-			log.Warnf("client{peer:%s} goroutine exit now.", c.addr)
-			break
-		}
+func (c *client) reConnect() { _ = "STUB: not implemented"; return }
 
-		sessionNum = c.sessionNum()
-		if connPoolSize <= sessionNum || maxReconnectAttempts < reconnectAttempts {
-			//exit reconnect when the number of connection pools is sufficient or the current reconnection attempts exceeds the max reconnection attempts.
-			break
-		}
-		c.connect()
-		reconnectAttempts++
-		maxReconnectInterval = int64(math.Min(float64(reconnectAttempts), float64(maxBackOffTimes))) * int64(reconnectInterval)
-		<-gxtime.After(time.Duration(maxReconnectInterval))
-	}
-}
+//exit reconnect when the number of connection pools is sufficient or the current reconnection attempts exceeds the max reconnection attempts.
 
-func (c *client) stop() {
-	select {
-	case <-c.done:
-		return
-	default:
-		c.Do(func() {
-			close(c.done)
-			c.Lock()
-			for s := range c.ssMap {
-				s.RemoveAttribute(sessionClientKey)
-				s.RemoveAttribute(ignoreReconnectKey)
-				s.Close()
-			}
-			c.ssMap = nil
+func (c *client) stop() { _ = "STUB: not implemented"; return }
 
-			c.Unlock()
-		})
-	}
-}
+func (c *client) IsClosed() bool { _ = "STUB: not implemented"; return false }
 
-func (c *client) IsClosed() bool {
-	select {
-	case <-c.done:
-		return true
-	default:
-		return false
-	}
-}
-
-func (c *client) Close() {
-	c.stop()
-	c.wg.Wait()
-}
+func (c *client) Close() { _ = "STUB: not implemented"; return }

@@ -29,15 +29,8 @@ package getty
 //   - The combination of handler and key must be unique, otherwise it will override previous callbacks
 //   - Callback functions will be executed in the order they were added when the session closes
 func (s *session) AddCloseCallback(handler, key any, f CallBackFunc) {
-	if f == nil {
-		return
-	}
-	s.closeCallbackMutex.Lock()
-	defer s.closeCallbackMutex.Unlock()
-	if s.IsClosed() {
-		return
-	}
-	s.closeCallback.Add(handler, key, f)
+	_ = "STUB: not implemented"
+	return
 }
 
 // RemoveCloseCallback removes the specified Session close callback function
@@ -52,14 +45,7 @@ func (s *session) AddCloseCallback(handler, key any, f CallBackFunc) {
 //   - If the session is already closed, this removal operation will be ignored
 //   - If no matching callback is found, this operation will have no effect
 //   - The removal operation is thread-safe
-func (s *session) RemoveCloseCallback(handler, key any) {
-	s.closeCallbackMutex.Lock()
-	defer s.closeCallbackMutex.Unlock()
-	if s.IsClosed() {
-		return
-	}
-	s.closeCallback.Remove(handler, key)
-}
+func (s *session) RemoveCloseCallback(handler, key any) { _ = "STUB: not implemented"; return }
 
 // invokeCloseCallbacks executes all registered close callback functions
 //
@@ -72,11 +58,7 @@ func (s *session) RemoveCloseCallback(handler, key any) {
 //   - This is an internal method, not recommended for external direct calls
 //   - If panic occurs during callback execution, it will be caught and logged
 //   - Callback functions should avoid long blocking operations, async processing is recommended for time-consuming tasks
-func (s *session) invokeCloseCallbacks() {
-	s.closeCallbackMutex.RLock()
-	defer s.closeCallbackMutex.RUnlock()
-	s.closeCallback.Invoke()
-}
+func (s *session) invokeCloseCallbacks() { _ = "STUB: not implemented"; return }
 
 // CallBackFunc defines the callback function type when Session closes
 //

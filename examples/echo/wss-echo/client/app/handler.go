@@ -19,12 +19,8 @@ package main
 
 import (
 	"errors"
-	"time"
-)
 
-import (
-	"github.com/AlexStocks/getty/transport"
-	log "github.com/AlexStocks/getty/util"
+	getty "github.com/AlexStocks/getty/transport"
 )
 
 var (
@@ -43,47 +39,23 @@ type clientEchoSession struct {
 
 type EchoMessageHandler struct{}
 
-func newEchoMessageHandler() *EchoMessageHandler {
-	return &EchoMessageHandler{}
-}
+func newEchoMessageHandler() *EchoMessageHandler { _ = "STUB: not implemented"; return nil }
 
 func (h *EchoMessageHandler) OnOpen(session getty.Session) error {
-	client.addSession(session)
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (h *EchoMessageHandler) OnError(session getty.Session, err error) {
-	log.Info("session{%s} got error{%v}, will be closed.", session.Stat(), err)
-	client.removeSession(session)
+	_ = "STUB: not implemented"
+	return
 }
 
-func (h *EchoMessageHandler) OnClose(session getty.Session) {
-	log.Info("session{%s} is closing......", session.Stat())
-	client.removeSession(session)
-}
+func (h *EchoMessageHandler) OnClose(session getty.Session) { _ = "STUB: not implemented"; return }
 
 func (h *EchoMessageHandler) OnMessage(session getty.Session, pkg any) {
-	p, ok := pkg.(*EchoPackage)
-	if !ok {
-		log.Error("illegal packge{%#v}", pkg)
-		return
-	}
-
-	log.Debug("get echo package{%s}", p)
-	client.updateSession(session)
+	_ = "STUB: not implemented"
+	return
 }
 
-func (h *EchoMessageHandler) OnCron(session getty.Session) {
-	clientEchoSession, err := client.getClientEchoSession(session)
-	if err != nil {
-		log.Error("client.getClientSession(session{%s}) = error{%#v}", session.Stat(), err)
-		return
-	}
-	if conf.sessionTimeout.Nanoseconds() < time.Since(session.GetActive()).Nanoseconds() {
-		log.Warn("session{%s} timeout{%s}, reqNum{%d}",
-			session.Stat(), time.Since(session.GetActive()).String(), clientEchoSession.reqNum)
-		client.removeSession(session)
-		return
-	}
-}
+func (h *EchoMessageHandler) OnCron(session getty.Session) { _ = "STUB: not implemented"; return }

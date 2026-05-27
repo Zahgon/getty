@@ -19,14 +19,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
-	"fmt"
 	"unsafe"
-)
-
-import (
-	log "github.com/AlexStocks/getty/util"
 )
 
 // //////////////////////////////////////////
@@ -46,9 +40,7 @@ var echoCommandStrings = [...]string{
 	"echo",
 }
 
-func (c echoCommand) String() string {
-	return echoCommandStrings[c]
-}
+func (c echoCommand) String() string { _ = "STUB: not implemented"; return "" }
 
 ////////////////////////////////////////////
 // EchoPkgHandler
@@ -94,59 +86,13 @@ type EchoPackage struct {
 	B string
 }
 
-func (p EchoPackage) String() string {
-	return fmt.Sprintf("log id:%d, sequence:%d, command:%s, echo string:%s",
-		p.H.LogID, p.H.Sequence, (echoCommand(p.H.Command)).String(), p.B)
-}
+func (p EchoPackage) String() string { _ = "STUB: not implemented"; return "" }
 
-func (p EchoPackage) Marshal() (*bytes.Buffer, error) {
-	var (
-		err error
-		buf *bytes.Buffer
-	)
-
-	buf = &bytes.Buffer{}
-	err = binary.Write(buf, binary.LittleEndian, p.H)
-	if err != nil {
-		return nil, err
-	}
-	buf.WriteByte((byte)(len(p.B)))
-	buf.WriteString(p.B)
-
-	return buf, nil
-}
+func (p EchoPackage) Marshal() (*bytes.Buffer, error) { _ = "STUB: not implemented"; return nil, nil }
 
 func (p *EchoPackage) Unmarshal(buf *bytes.Buffer) (int, error) {
-	var (
-		err error
-		len byte
-	)
-
-	if buf.Len() < echoPkgHeaderLen {
-		return 0, ErrNotEnoughStream
-	}
-
-	// header
-	err = binary.Read(buf, binary.LittleEndian, &(p.H))
-	if err != nil {
-		return 0, err
-	}
-	if p.H.Magic != echoPkgMagic {
-		log.Error("@p.H.Magic{%x}, right magic{%x}", p.H.Magic, echoPkgMagic)
-		return 0, ErrIllegalMagic
-	}
-	if buf.Len() < (int)(p.H.Len) {
-		return 0, ErrNotEnoughStream
-	}
-	if maxEchoStringLen < p.H.Len-1 {
-		return 0, ErrTooLargePackage
-	}
-
-	len, err = buf.ReadByte()
-	if err != nil {
-		return 0, nil
-	}
-	p.B = (string)(buf.Next((int)(len)))
-
-	return (int)(p.H.Len) + echoPkgHeaderLen, nil
+	_ = "STUB: not implemented"
+	return 0, nil
 }
+
+// header

@@ -19,26 +19,14 @@ package getty
 
 import (
 	"compress/flate"
-	"crypto/tls"
-	"fmt"
 	"io"
 	"net"
 	"sync"
 	"time"
-)
-
-import (
-	"github.com/golang/snappy"
 
 	"github.com/gorilla/websocket"
 
-	perrors "github.com/pkg/errors"
-
 	uatomic "go.uber.org/atomic"
-)
-
-import (
-	log "github.com/AlexStocks/getty/util"
 )
 
 var (
@@ -97,77 +85,51 @@ type gettyConn struct {
 	ss            Session
 }
 
-func (c *gettyConn) ID() uint32 {
-	return c.id
-}
+func (c *gettyConn) ID() uint32 { _ = "STUB: not implemented"; return 0 }
 
-func (c *gettyConn) LocalAddr() string {
-	return c.local
-}
+func (c *gettyConn) LocalAddr() string { _ = "STUB: not implemented"; return "" }
 
-func (c *gettyConn) RemoteAddr() string {
-	return c.peer
-}
+func (c *gettyConn) RemoteAddr() string { _ = "STUB: not implemented"; return "" }
 
-func (c *gettyConn) IncReadPkgNum() {
-	c.readPkgNum.Add(1)
-}
+func (c *gettyConn) IncReadPkgNum() { _ = "STUB: not implemented"; return }
 
-func (c *gettyConn) IncWritePkgNum() {
-	c.writePkgNum.Add(1)
-}
+func (c *gettyConn) IncWritePkgNum() { _ = "STUB: not implemented"; return }
 
-func (c *gettyConn) UpdateActive() {
-	c.active.Store(int64(time.Since(launchTime)))
-}
+func (c *gettyConn) UpdateActive() { _ = "STUB: not implemented"; return }
 
-func (c *gettyConn) GetActive() time.Time {
-	return launchTime.Add(time.Duration(c.active.Load()))
-}
+func (c *gettyConn) GetActive() time.Time { _ = "STUB: not implemented"; return *new(time.Time) }
 
 // removed unused methods send/close
 
 func (c gettyConn) ReadTimeout() time.Duration {
-	return c.rTimeout.Load()
+	_ = "STUB: not implemented"
+	return *new(time.Duration)
 }
 
 func (c *gettyConn) SetSession(ss Session) {
-	c.ss = ss
+	_ = "STUB: not implemented"
+
+	// SetReadTimeout Pls do not set read deadline for websocket connection. AlexStocks 20180310
+	// gorilla/websocket/conn.go:NextReader will always fail when got a timeout error.
+	//
+	// Pls do not set read deadline when using compression. AlexStocks 20180314.
+	return
 }
 
-// SetReadTimeout Pls do not set read deadline for websocket connection. AlexStocks 20180310
-// gorilla/websocket/conn.go:NextReader will always fail when got a timeout error.
-//
-// Pls do not set read deadline when using compression. AlexStocks 20180314.
-func (c *gettyConn) SetReadTimeout(rTimeout time.Duration) {
-	if rTimeout < 1 {
-		panic("@rTimeout < 1")
-	}
-
-	c.rTimeout.Store(rTimeout)
-	if c.wTimeout.Load() == 0 {
-		c.wTimeout.Store(rTimeout)
-	}
-}
+func (c *gettyConn) SetReadTimeout(rTimeout time.Duration) { _ = "STUB: not implemented"; return }
 
 func (c gettyConn) WriteTimeout() time.Duration {
-	return c.wTimeout.Load()
+	_ = "STUB: not implemented"
+	return *
+
+	// SetWriteTimeout Pls do not set write deadline for websocket connection. AlexStocks 20180310
+	// gorilla/websocket/conn.go:NextWriter will always fail when got a timeout error.
+	//
+	// Pls do not set write deadline when using compression. AlexStocks 20180314.
+	new(time.Duration)
 }
 
-// SetWriteTimeout Pls do not set write deadline for websocket connection. AlexStocks 20180310
-// gorilla/websocket/conn.go:NextWriter will always fail when got a timeout error.
-//
-// Pls do not set write deadline when using compression. AlexStocks 20180314.
-func (c *gettyConn) SetWriteTimeout(wTimeout time.Duration) {
-	if wTimeout < 1 {
-		panic("@wTimeout < 1")
-	}
-
-	c.wTimeout.Store(wTimeout)
-	if c.rTimeout.Load() == 0 {
-		c.rTimeout.Store(wTimeout)
-	}
-}
+func (c *gettyConn) SetWriteTimeout(wTimeout time.Duration) { _ = "STUB: not implemented"; return }
 
 /////////////////////////////////////////
 // getty tcp connection
@@ -181,33 +143,9 @@ type gettyTCPConn struct {
 }
 
 // create gettyTCPConn
-func newGettyTCPConn(conn net.Conn) *gettyTCPConn {
-	if conn == nil {
-		panic("newGettyTCPConn(conn):@conn is nil")
-	}
-	var localAddr, peerAddr string
-	//  check conn.LocalAddr or conn.RemoteAddr is nil to defeat panic on 2016/09/27
-	if conn.LocalAddr() != nil {
-		localAddr = conn.LocalAddr().String()
-	}
-	if conn.RemoteAddr() != nil {
-		peerAddr = conn.RemoteAddr().String()
-	}
+func newGettyTCPConn(conn net.Conn) *gettyTCPConn { _ = "STUB: not implemented"; return nil }
 
-	return &gettyTCPConn{
-		conn:   conn,
-		reader: io.Reader(conn),
-		writer: io.Writer(conn),
-		gettyConn: gettyConn{
-			id:       connID.Add(1),
-			rTimeout: *uatomic.NewDuration(netIOTimeout),
-			wTimeout: *uatomic.NewDuration(netIOTimeout),
-			local:    localAddr,
-			peer:     peerAddr,
-			compress: CompressNone,
-		},
-	}
-}
+//  check conn.LocalAddr or conn.RemoteAddr is nil to defeat panic on 2016/09/27
 
 // for zip compress
 type writeFlusher struct {
@@ -215,142 +153,34 @@ type writeFlusher struct {
 	lock    sync.Mutex
 }
 
-func (t *writeFlusher) Write(p []byte) (int, error) {
-	var (
-		n   int
-		err error
-	)
-	t.lock.Lock()
-	defer t.lock.Unlock()
-	n, err = t.flusher.Write(p)
-	if err != nil {
-		return n, perrors.WithStack(err)
-	}
-	if err := t.flusher.Flush(); err != nil {
-		return 0, perrors.WithStack(err)
-	}
-
-	return n, nil
-}
+func (t *writeFlusher) Write(p []byte) (int, error) { _ = "STUB: not implemented"; return 0, nil }
 
 // SetCompressType set compress type(tcp: zip/snappy, websocket:zip)
-func (t *gettyTCPConn) SetCompressType(c CompressType) {
-	switch c {
-	case CompressNone, CompressZip, CompressBestSpeed, CompressBestCompression, CompressHuffman:
-		ioReader := io.Reader(t.conn)
-		t.reader = flate.NewReader(ioReader)
-
-		ioWriter := io.Writer(t.conn)
-		w, err := flate.NewWriter(ioWriter, int(c))
-		if err != nil {
-			panic(fmt.Sprintf("flate.NewReader(flate.DefaultCompress) = err(%s)", err))
-		}
-		t.writer = &writeFlusher{flusher: w}
-
-	case CompressSnappy:
-		ioReader := io.Reader(t.conn)
-		t.reader = snappy.NewReader(ioReader)
-		ioWriter := io.Writer(t.conn)
-		t.writer = snappy.NewBufferedWriter(ioWriter)
-
-	default:
-		panic(fmt.Sprintf("illegal comparess type %d", c))
-	}
-	t.compress = c
-}
+func (t *gettyTCPConn) SetCompressType(c CompressType) { _ = "STUB: not implemented"; return }
 
 // tcp connection read
-func (t *gettyTCPConn) recv(p []byte) (int, error) {
-	var (
-		err         error
-		currentTime time.Time
-		length      int
-	)
+func (t *gettyTCPConn) recv(p []byte) (int, error) { _ = "STUB: not implemented"; return 0, nil }
 
-	// set read timeout deadline
-	if t.compress == CompressNone && t.rTimeout.Load() > 0 {
-		// Set Deadline every time, since golang has fixed the performance issue
-		// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
-		currentTime = time.Now()
-		if err = t.conn.SetReadDeadline(currentTime.Add(t.rTimeout.Load())); err != nil {
-			// just a timeout error
-			return 0, perrors.WithStack(err)
-		}
-		t.rLastDeadline.Store(currentTime)
-	}
+// set read timeout deadline
 
-	length, err = t.reader.Read(p)
-	t.readBytes.Add(uint32(length))
-	return length, perrors.WithStack(err)
-}
+// Set Deadline every time, since golang has fixed the performance issue
+// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
+
+// just a timeout error
 
 // tcp connection write
-func (t *gettyTCPConn) Send(pkg any) (int, error) {
-	var (
-		err         error
-		currentTime time.Time
-		ok          bool
-		p           []byte
-		length      int
-		lg          int64
-	)
+func (t *gettyTCPConn) Send(pkg any) (int, error) { _ = "STUB: not implemented"; return 0, nil }
 
-	if t.compress == CompressNone && t.wTimeout.Load() > 0 {
-		// Set Deadline every time, since golang has fixed the performance issue
-		// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
-		currentTime = time.Now()
-		if err = t.conn.SetWriteDeadline(currentTime.Add(t.wTimeout.Load())); err != nil {
-			return 0, perrors.WithStack(err)
-		}
-		t.wLastDeadline.Store(currentTime)
-	}
-
-	if buffers, ok := pkg.([][]byte); ok {
-		netBuf := net.Buffers(buffers)
-		lg, err = netBuf.WriteTo(t.conn)
-		if err == nil {
-			t.writeBytes.Add((uint32)(lg))
-			t.writePkgNum.Add((uint32)(len(buffers)))
-		}
-		log.Debugf("localAddr: %s, remoteAddr:%s, now:%s, length:%d, err:%s",
-			t.conn.LocalAddr(), t.conn.RemoteAddr(), currentTime, length, err)
-		return int(lg), perrors.WithStack(err)
-	}
-
-	if p, ok = pkg.([]byte); ok {
-		length, err = t.writer.Write(p)
-		if err == nil {
-			t.writeBytes.Add((uint32)(len(p)))
-			t.writePkgNum.Add(1)
-		}
-		log.Debugf("localAddr: %s, remoteAddr:%s, now:%s, length:%d, err:%v",
-			t.conn.LocalAddr(), t.conn.RemoteAddr(), currentTime, length, err)
-		return length, perrors.WithStack(err)
-	}
-
-	return 0, perrors.Errorf("illegal @pkg{%#v} type", pkg)
-}
+// Set Deadline every time, since golang has fixed the performance issue
+// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
 
 // close tcp connection
 func (t *gettyTCPConn) CloseConn(waitSec int) {
+	_ = "STUB: not implemented"
 	// if tcpConn, ok := t.conn.(*net.TCPConn); ok {
 	// tcpConn.SetLinger(0)
 	// }
-
-	if t.conn != nil {
-		if writer, ok := t.writer.(*snappy.Writer); ok {
-			if err := writer.Close(); err != nil {
-				log.Errorf("snappy.Writer.Close() = error:%+v", err)
-			}
-		}
-		if conn, ok := t.conn.(*net.TCPConn); ok {
-			_ = conn.SetLinger(waitSec)
-			_ = conn.Close()
-		} else {
-			_ = t.conn.(*tls.Conn).Close()
-		}
-		t.conn = nil
-	}
+	return
 }
 
 // ///////////////////////////////////////
@@ -362,9 +192,7 @@ type UDPContext struct {
 	PeerAddr *net.UDPAddr
 }
 
-func (c UDPContext) String() string {
-	return fmt.Sprintf("{pkg:%#v, peer addr:%s}", c.Pkg, c.PeerAddr)
-}
+func (c UDPContext) String() string { _ = "STUB: not implemented"; return "" }
 
 type gettyUDPConn struct {
 	gettyConn
@@ -373,116 +201,32 @@ type gettyUDPConn struct {
 }
 
 // create gettyUDPConn
-func newGettyUDPConn(conn *net.UDPConn) *gettyUDPConn {
-	if conn == nil {
-		panic("newGettyUDPConn(conn):@conn is nil")
-	}
+func newGettyUDPConn(conn *net.UDPConn) *gettyUDPConn { _ = "STUB: not implemented"; return nil }
 
-	var localAddr, peerAddr string
-	if conn.LocalAddr() != nil {
-		localAddr = conn.LocalAddr().String()
-	}
+// connected udp
 
-	if conn.RemoteAddr() != nil {
-		// connected udp
-		peerAddr = conn.RemoteAddr().String()
-	}
-
-	return &gettyUDPConn{
-		conn: conn,
-		gettyConn: gettyConn{
-			id:       connID.Add(1),
-			rTimeout: *uatomic.NewDuration(netIOTimeout),
-			wTimeout: *uatomic.NewDuration(netIOTimeout),
-			local:    localAddr,
-			peer:     peerAddr,
-			compress: CompressNone,
-		},
-	}
-}
-
-func (u *gettyUDPConn) SetCompressType(c CompressType) {
-	switch c {
-	case CompressNone, CompressZip, CompressBestSpeed, CompressBestCompression, CompressHuffman, CompressSnappy:
-		u.compressType = c
-
-	default:
-		panic(fmt.Sprintf("illegal comparess type %d", c))
-	}
-}
+func (u *gettyUDPConn) SetCompressType(c CompressType) { _ = "STUB: not implemented"; return }
 
 // udp connection read
 func (u *gettyUDPConn) recv(p []byte) (int, *net.UDPAddr, error) {
-	if u.rTimeout.Load() > 0 {
+	_ = "STUB: not implemented"
+	return 0,
+
 		// Set Deadline every time, since golang has fixed the performance issue
 		// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
-		currentTime := time.Now()
-		if err := u.conn.SetReadDeadline(currentTime.Add(u.rTimeout.Load())); err != nil {
-			return 0, nil, perrors.WithStack(err)
-		}
-		u.rLastDeadline.Store(currentTime)
-	}
-
-	length, addr, err := u.conn.ReadFromUDP(p) // connected udp also can get return @addr
-	log.Debugf("ReadFromUDP(p:%d) = {length:%d, peerAddr:%s, error:%v}", len(p), length, addr, err)
-	if err == nil {
-		u.readBytes.Add(uint32(length))
-	}
-
-	return length, addr, perrors.WithStack(err)
+		nil, nil
 }
+
+// connected udp also can get return @addr
 
 // write udp packet, @ctx should be of type UDPContext
-func (u *gettyUDPConn) Send(udpCtx any) (int, error) {
-	var (
-		err         error
-		currentTime time.Time
-		length      int
-		ok          bool
-		ctx         UDPContext
-		buf         []byte
-		peerAddr    *net.UDPAddr
-	)
+func (u *gettyUDPConn) Send(udpCtx any) (int, error) { _ = "STUB: not implemented"; return 0, nil }
 
-	if ctx, ok = udpCtx.(UDPContext); !ok {
-		return 0, perrors.Errorf("illegal @udpCtx{%s} type, @udpCtx type:%T", udpCtx, udpCtx)
-	}
-	if buf, ok = ctx.Pkg.([]byte); !ok {
-		return 0, perrors.Errorf("illegal @udpCtx.Pkg{%#v} type", udpCtx)
-	}
-	if u.ss.EndPoint().EndPointType() == UDP_ENDPOINT {
-		peerAddr = ctx.PeerAddr
-		if peerAddr == nil {
-			return 0, ErrNullPeerAddr
-		}
-	}
-
-	if u.wTimeout.Load() > 0 {
-		// Set Deadline every time, since golang has fixed the performance issue
-		// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
-		currentTime = time.Now()
-		if err = u.conn.SetWriteDeadline(currentTime.Add(u.wTimeout.Load())); err != nil {
-			return 0, perrors.WithStack(err)
-		}
-		u.wLastDeadline.Store(currentTime)
-	}
-
-	if length, _, err = u.conn.WriteMsgUDP(buf, nil, peerAddr); err == nil {
-		u.writeBytes.Add((uint32)(len(buf)))
-		u.writePkgNum.Add(1)
-	}
-	log.Debugf("WriteMsgUDP(peerAddr:%s) = {length:%d, error:%v}", peerAddr, length, err)
-
-	return length, perrors.WithStack(err)
-}
+// Set Deadline every time, since golang has fixed the performance issue
+// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
 
 // close udp connection
-func (u *gettyUDPConn) CloseConn(_ int) {
-	if u.conn != nil {
-		_ = u.conn.Close()
-		u.conn = nil
-	}
-}
+func (u *gettyUDPConn) CloseConn(_ int) { _ = "STUB: not implemented"; return }
 
 // ///////////////////////////////////////
 // getty websocket connection
@@ -496,182 +240,55 @@ type gettyWSConn struct {
 }
 
 // create websocket connection
-func newGettyWSConn(conn *websocket.Conn) *gettyWSConn {
-	if conn == nil {
-		panic("newGettyWSConn(conn):@conn is nil")
-	}
-	var localAddr, peerAddr string
-	//  check conn.LocalAddr or conn.RemoetAddr is nil to defeat panic on 2016/09/27
-	if conn.LocalAddr() != nil {
-		localAddr = conn.LocalAddr().String()
-	}
-	if conn.RemoteAddr() != nil {
-		peerAddr = conn.RemoteAddr().String()
-	}
+func newGettyWSConn(conn *websocket.Conn) *gettyWSConn { _ = "STUB: not implemented"; return nil }
 
-	gettyWSConn := &gettyWSConn{
-		conn: conn,
-		gettyConn: gettyConn{
-			id:       connID.Add(1),
-			rTimeout: *uatomic.NewDuration(netIOTimeout),
-			wTimeout: *uatomic.NewDuration(netIOTimeout),
-			local:    localAddr,
-			peer:     peerAddr,
-			compress: CompressNone,
-		},
-	}
-	conn.EnableWriteCompression(false)
-	conn.SetPingHandler(gettyWSConn.handlePing)
-	conn.SetPongHandler(gettyWSConn.handlePong)
-
-	return gettyWSConn
-}
+//  check conn.LocalAddr or conn.RemoetAddr is nil to defeat panic on 2016/09/27
 
 // SetCompressType set compress type
-func (w *gettyWSConn) SetCompressType(c CompressType) {
-	switch c {
-	case CompressNone, CompressZip, CompressBestSpeed, CompressBestCompression, CompressHuffman:
-		w.conn.EnableWriteCompression(true)
-		if err := w.conn.SetCompressionLevel(int(c)); err != nil {
-			log.Warnf("failed to set compression level: %+v", err)
-		}
+func (w *gettyWSConn) SetCompressType(c CompressType) { _ = "STUB: not implemented"; return }
 
-	default:
-		panic(fmt.Sprintf("illegal comparess type %d", c))
-	}
-	w.compress = c
-}
+func (w *gettyWSConn) handlePing(message string) error { _ = "STUB: not implemented"; return nil }
 
-func (w *gettyWSConn) handlePing(message string) error {
-	err := w.writePong([]byte(message))
-	if err == websocket.ErrCloseSent {
-		err = nil
-		//	change the error checking from "e.Temporary()" to "e.Timeout()".
-		//  as per https://github.com/golang/go/issues/45729,
-		//  Timeout() correctly captures subset of Temporary() errors that could be retried.
-		//  The rest of Temporary() errors should not be retried anyway (like syscall errors, out of file descriptors)
-	} else if e, ok := err.(net.Error); ok && e.Timeout() {
-		err = nil
-	}
-	if err == nil {
-		w.UpdateActive()
-	}
+//	change the error checking from "e.Temporary()" to "e.Timeout()".
+//  as per https://github.com/golang/go/issues/45729,
+//  Timeout() correctly captures subset of Temporary() errors that could be retried.
+//  The rest of Temporary() errors should not be retried anyway (like syscall errors, out of file descriptors)
 
-	return perrors.WithStack(err)
-}
-
-func (w *gettyWSConn) handlePong(string) error {
-	w.UpdateActive()
-	return nil
-}
+func (w *gettyWSConn) handlePong(string) error { _ = "STUB: not implemented"; return nil }
 
 // websocket connection read
 func (w *gettyWSConn) recv() ([]byte, error) {
+	_ = "STUB: not implemented"
 	// Pls do not set read deadline when using ReadMessage. AlexStocks 20180310
 	// gorilla/websocket/conn.go:NextReader will always fail when got a timeout error.
-	_, b, e := w.threadSafeReadMessage() // the first return value is message type.
-	if e == nil {
-		w.readBytes.Add((uint32)(len(b)))
-	} else {
-		if websocket.IsUnexpectedCloseError(e, websocket.CloseGoingAway) {
-			log.Warnf("websocket unexpected CloseConn error: %v", e)
-		}
-	}
-
-	return b, perrors.WithStack(e)
+	return nil, nil
 }
 
-func (w *gettyWSConn) updateWriteDeadline() error {
-	var (
-		err         error
-		currentTime time.Time
-	)
+// the first return value is message type.
 
-	if w.wTimeout.Load() > 0 {
-		// Set Deadline every time, since golang has fixed the performance issue
-		// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
-		currentTime = time.Now()
-		if err = w.conn.SetWriteDeadline(currentTime.Add(w.wTimeout.Load())); err != nil {
-			return perrors.WithStack(err)
-		}
-		w.wLastDeadline.Store(currentTime)
-	}
+func (w *gettyWSConn) updateWriteDeadline() error { _ = "STUB: not implemented"; return nil }
 
-	return nil
-}
+// Set Deadline every time, since golang has fixed the performance issue
+// See https://github.com/golang/go/issues/15133#issuecomment-271571395 for details
 
 // websocket connection write
-func (w *gettyWSConn) Send(pkg any) (int, error) {
-	var (
-		err error
-		ok  bool
-		p   []byte
-	)
+func (w *gettyWSConn) Send(pkg any) (int, error) { _ = "STUB: not implemented"; return 0, nil }
 
-	if p, ok = pkg.([]byte); !ok {
-		return 0, perrors.Errorf("illegal @pkg{%#v} type", pkg)
-	}
+func (w *gettyWSConn) writePing() error { _ = "STUB: not implemented"; return nil }
 
-	if err := w.updateWriteDeadline(); err != nil {
-		log.Warnf("failed to update write deadline: %+v", err)
-	}
-	if err = w.threadSafeWriteMessage(websocket.BinaryMessage, p); err == nil {
-		w.writeBytes.Add((uint32)(len(p)))
-		w.writePkgNum.Add(1)
-	}
-	return len(p), perrors.WithStack(err)
-}
-
-func (w *gettyWSConn) writePing() error {
-	if err := w.updateWriteDeadline(); err != nil {
-		log.Warnf("failed to update write deadline: %+v", err)
-	}
-	return perrors.WithStack(w.threadSafeWriteMessage(websocket.PingMessage, []byte{}))
-}
-
-func (w *gettyWSConn) writePong(message []byte) error {
-	if err := w.updateWriteDeadline(); err != nil {
-		log.Warnf("failed to update write deadline: %+v", err)
-	}
-	return perrors.WithStack(w.threadSafeWriteMessage(websocket.PongMessage, message))
-}
+func (w *gettyWSConn) writePong(message []byte) error { _ = "STUB: not implemented"; return nil }
 
 // close websocket connection
-func (w *gettyWSConn) CloseConn(waitSec int) {
-	if err := w.updateWriteDeadline(); err != nil {
-		log.Warnf("failed to update write deadline: %+v", err)
-	}
-	if err := w.threadSafeWriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye-bye!!!")); err != nil {
-		log.Warnf("failed to send close message: %+v", err)
-	}
-	conn := w.conn.UnderlyingConn()
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		_ = tcpConn.SetLinger(waitSec)
-	} else if wsConn, ok := conn.(*tls.Conn); ok {
-		_ = wsConn.CloseWrite()
-	}
-	if err := w.conn.Close(); err != nil {
-		log.Warnf("failed to close websocket conn: %+v", err)
-	}
-}
+func (w *gettyWSConn) CloseConn(waitSec int) { _ = "STUB: not implemented"; return }
 
 // uses a mutex(writeLock) to ensure that only one thread can send a message at a time, preventing race conditions.
 func (w *gettyWSConn) threadSafeWriteMessage(messageType int, data []byte) error {
-	w.writeLock.Lock()
-	defer w.writeLock.Unlock()
-	if err := w.conn.WriteMessage(messageType, data); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 // uses a mutex(readLock) to ensure that only one thread can read a message at a time, preventing race conditions.
 func (w *gettyWSConn) threadSafeReadMessage() (int, []byte, error) {
-	w.readLock.Lock()
-	defer w.readLock.Unlock()
-	messageType, readBytes, err := w.conn.ReadMessage()
-	if err != nil {
-		return messageType, nil, err
-	}
-	return messageType, readBytes, nil
+	_ = "STUB: not implemented"
+	return 0, nil, nil
 }

@@ -39,58 +39,50 @@ type ServerOptions struct {
 
 // WithLocalAddress @addr server listen address.
 func WithLocalAddress(addr string) ServerOption {
-	return func(o *ServerOptions) {
-		o.addr = addr
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithWebsocketServerPath @path: websocket request url path
 func WithWebsocketServerPath(path string) ServerOption {
-	return func(o *ServerOptions) {
-		o.path = path
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithWebsocketServerCert @cert: server certificate file
 func WithWebsocketServerCert(cert string) ServerOption {
-	return func(o *ServerOptions) {
-		o.cert = cert
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithWebsocketServerPrivateKey @key: server private key(contains its public key)
 func WithWebsocketServerPrivateKey(key string) ServerOption {
-	return func(o *ServerOptions) {
-		o.privateKey = key
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithWebsocketServerRootCert @cert is the root certificate file to verify the legitimacy of server
 func WithWebsocketServerRootCert(cert string) ServerOption {
-	return func(o *ServerOptions) {
-		o.caCert = cert
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithServerTaskPool @pool server task pool.
 func WithServerTaskPool(pool gxsync.GenericTaskPool) ServerOption {
-	return func(o *ServerOptions) {
-		o.tPool = pool
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithServerSslEnabled enable use tls
 func WithServerSslEnabled(sslEnabled bool) ServerOption {
-	return func(o *ServerOptions) {
-		o.sslEnabled = sslEnabled
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 // WithServerTlsConfigBuilder sslConfig is tls config
 func WithServerTlsConfigBuilder(tlsConfigBuilder TlsConfigBuilder) ServerOption {
-	return func(o *ServerOptions) {
-		o.tlsConfigBuilder = tlsConfigBuilder
-	}
+	_ = "STUB: not implemented"
+	return *new(ServerOption)
 }
 
 /////////////////////////////////////////
@@ -118,62 +110,48 @@ type ClientOptions struct {
 
 // WithServerAddress @addr is server address.
 func WithServerAddress(addr string) ClientOption {
-	return func(o *ClientOptions) {
-		o.addr = addr
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithReconnectInterval @reconnectInterval is server address.
 func WithReconnectInterval(reconnectInterval int) ClientOption {
-	return func(o *ClientOptions) {
-		if 0 < reconnectInterval {
-			o.reconnectInterval = reconnectInterval
-		}
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithClientTaskPool @pool client task pool.
 func WithClientTaskPool(pool gxsync.GenericTaskPool) ClientOption {
-	return func(o *ClientOptions) {
-		o.tPool = pool
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithConnectionNumber @num is connection number.
 func WithConnectionNumber(num int) ClientOption {
-	return func(o *ClientOptions) {
-		if 0 < num {
-			o.number = num
-		}
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithRootCertificateFile @certs is client certificate file. it can be empty.
 func WithRootCertificateFile(cert string) ClientOption {
-	return func(o *ClientOptions) {
-		o.cert = cert
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithClientSslEnabled enable use tls
 func WithClientSslEnabled(sslEnabled bool) ClientOption {
-	return func(o *ClientOptions) {
-		o.sslEnabled = sslEnabled
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithClientTlsConfigBuilder sslConfig is tls config
 func WithClientTlsConfigBuilder(tlsConfigBuilder TlsConfigBuilder) ClientOption {
-	return func(o *ClientOptions) {
-		o.tlsConfigBuilder = tlsConfigBuilder
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }
 
 // WithReconnectAttempts @maxReconnectAttempts is max reconnect attempts.
 func WithReconnectAttempts(maxReconnectAttempts int) ClientOption {
-	return func(o *ClientOptions) {
-		if 0 < maxReconnectAttempts {
-			o.maxReconnectAttempts = maxReconnectAttempts
-		}
-	}
+	_ = "STUB: not implemented"
+	return *new(ClientOption)
 }

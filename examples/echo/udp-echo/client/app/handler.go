@@ -19,12 +19,8 @@ package main
 
 import (
 	"errors"
-	"time"
-)
 
-import (
-	"github.com/AlexStocks/getty/transport"
-	log "github.com/AlexStocks/getty/util"
+	getty "github.com/AlexStocks/getty/transport"
 )
 
 var errSessionNotExist = errors.New("session not exist")
@@ -43,57 +39,27 @@ type EchoMessageHandler struct {
 }
 
 func newEchoMessageHandler(client *EchoClient) *EchoMessageHandler {
-	return &EchoMessageHandler{client: client}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (h *EchoMessageHandler) OnOpen(session getty.Session) error {
-	h.client.addSession(session)
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (h *EchoMessageHandler) OnError(session getty.Session, err error) {
-	log.Info("session{%s} got error{%v}, will be closed.", session.Stat(), err)
-	h.client.removeSession(session)
+	_ = "STUB: not implemented"
+	return
 }
 
-func (h *EchoMessageHandler) OnClose(session getty.Session) {
-	log.Info("session{%s} is closing......", session.Stat())
-	h.client.removeSession(session)
-}
+func (h *EchoMessageHandler) OnClose(session getty.Session) { _ = "STUB: not implemented"; return }
 
 func (h *EchoMessageHandler) OnMessage(session getty.Session, udpCtx any) {
-	ctx, ok := udpCtx.(getty.UDPContext)
-	if !ok {
-		log.Error("illegal UDPContext{%#v}", udpCtx)
-		return
-	}
-	p, ok := ctx.Pkg.(*EchoPackage)
-	if !ok {
-		log.Error("illegal packge{%#v}", ctx.Pkg)
-		return
-	}
-
-	log.Debug("get echo package{%s}", p)
-
-	h.client.updateSession(session)
+	_ = "STUB: not implemented"
+	return
 }
 
-func (h *EchoMessageHandler) OnCron(session getty.Session) {
-	clientEchoSession, err := h.client.getClientEchoSession(session)
-	if err != nil {
-		log.Error("client.getClientSession(session{%s}) = error{%#v}", session.Stat(), err)
-		return
-	}
-	if conf.sessionTimeout.Nanoseconds() < time.Since(session.GetActive()).Nanoseconds() {
-		log.Warn("session{%s} timeout{%s}, reqNum{%d}",
-			session.Stat(), time.Since(session.GetActive()).String(), clientEchoSession.reqNum)
-		// UDP_ENDPOINT session should be long live.
-		if h.client != &unconnectedClient {
-			h.client.removeSession(session)
-		}
-		return
-	}
+func (h *EchoMessageHandler) OnCron(session getty.Session) { _ = "STUB: not implemented"; return }
 
-	h.client.heartbeat(session)
-}
+// UDP_ENDPOINT session should be long live.

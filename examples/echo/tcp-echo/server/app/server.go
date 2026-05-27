@@ -18,25 +18,14 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"net/http"
 	_ "net/http/pprof"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-)
 
-import (
 	gxlog "github.com/AlexStocks/goext/log"
-	gxnet "github.com/AlexStocks/goext/net"
 
 	gxsync "github.com/dubbogo/gost/sync"
-)
 
-import (
 	getty "github.com/AlexStocks/getty/transport"
+
 	log "github.com/AlexStocks/getty/util"
 )
 
@@ -75,124 +64,43 @@ func main() {
 }
 
 func initProfiling() {
+	_ = "STUB: not implemented"
 	// addr = *host + ":" + "10000"
-	addr := gxnet.HostAddress(conf.Host, conf.ProfilePort)
-	log.Info("App Profiling startup on address{%v}", addr+pprofPath)
-	go func() {
-		log.Info(http.ListenAndServe(addr, nil))
-	}()
+	return
 }
 
-func newSession(session getty.Session) error {
-	var (
-		ok      bool
-		tcpConn *net.TCPConn
-	)
+func newSession(session getty.Session) error { _ = "STUB: not implemented"; return nil }
 
-	if conf.GettySessionParam.CompressEncoding {
-		session.SetCompressType(getty.CompressZip)
-	}
+// session.SetTaskPool(taskPool)
 
-	if tcpConn, ok = session.Conn().(*net.TCPConn); !ok {
-		panic(fmt.Sprintf("%s, session.conn{%#v} is not tcp connection\n", session.Stat(), session.Conn()))
-	}
+func initServer() { _ = "STUB: not implemented"; return }
 
-	if err := tcpConn.SetNoDelay(conf.GettySessionParam.TcpNoDelay); err != nil {
-		log.Warnf("SetNoDelay error: %+v", err)
-	}
-	if err := tcpConn.SetKeepAlive(conf.GettySessionParam.TcpKeepAlive); err != nil {
-		log.Warnf("SetKeepAlive error: %+v", err)
-	}
-	if conf.GettySessionParam.TcpKeepAlive {
-		if err := tcpConn.SetKeepAlivePeriod(conf.GettySessionParam.keepAlivePeriod); err != nil {
-			log.Warnf("SetKeepAlivePeriod error: %+v", err)
-		}
-	}
-	if err := tcpConn.SetReadBuffer(conf.GettySessionParam.TcpRBufSize); err != nil {
-		log.Warnf("SetReadBuffer error: %+v", err)
-	}
-	if err := tcpConn.SetWriteBuffer(conf.GettySessionParam.TcpWBufSize); err != nil {
-		log.Warnf("SetWriteBuffer error: %+v", err)
-	}
+// if *host == "" {
+// 	panic("host can not be nil")
+// }
+// if *ports == "" {
+// 	panic("ports can not be nil")
+// }
 
-	session.SetName(conf.GettySessionParam.SessionName)
-	session.SetMaxMsgLen(conf.GettySessionParam.MaxMsgLen)
-	session.SetPkgHandler(echoPkgHandler)
-	session.SetEventListener(echoMsgHandler)
-	session.SetReadTimeout(conf.GettySessionParam.tcpReadTimeout)
-	session.SetWriteTimeout(conf.GettySessionParam.tcpWriteTimeout)
-	session.SetCronPeriod((int)(conf.sessionTimeout.Nanoseconds() / 1e6))
-	session.SetWaitTime(conf.GettySessionParam.waitTimeout)
-	// session.SetTaskPool(taskPool)
-	log.Debug("app accepts new session:%s\n", session.Stat())
+// portList = strings.Split(*ports, ",")
 
-	return nil
-}
+// run server
 
-func initServer() {
-	var (
-		addr     string
-		portList []string
-		server   getty.Server
-	)
-
-	// if *host == "" {
-	// 	panic("host can not be nil")
-	// }
-	// if *ports == "" {
-	// 	panic("ports can not be nil")
-	// }
-
-	// portList = strings.Split(*ports, ",")
-
-	portList = conf.Ports
-	if len(portList) == 0 {
-		panic("portList is nil")
-	}
-	for _, port := range portList {
-		addr = gxnet.HostAddress2(conf.Host, port)
-		serverOpts := []getty.ServerOption{getty.WithLocalAddress(addr)}
-		serverOpts = append(serverOpts, getty.WithServerTaskPool(taskPool))
-		server = getty.NewTCPServer(serverOpts...)
-		// run server
-		server.RunEventLoop(newSession)
-		log.Debug("server bind addr{%s} ok!", addr)
-		serverList = append(serverList, server)
-	}
-}
-
-func uninitServer() {
-	for _, server := range serverList {
-		server.Close()
-	}
-	if taskPool != nil {
-		taskPool.Close()
-	}
-}
+func uninitServer() { _ = "STUB: not implemented"; return }
 
 func initSignal() {
+	_ = "STUB: not implemented"
 	// signal.Notify的ch信道是阻塞的(signal.Notify不会阻塞发送信号), 需要设置缓冲
-	signals := make(chan os.Signal, 1)
-	// It is not possible to block SIGKILL or syscall.SIGSTOP
-	signal.Notify(signals, os.Interrupt, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	for {
-		sig := <-signals
-		log.Info("get signal %s", sig.String())
-		switch sig {
-		case syscall.SIGHUP:
-		// reload()
-		default:
-			go time.AfterFunc(conf.failFastTimeout, func() {
-				// log.Warn("app exit now by force...")
-				// os.Exit(1)
-				log.Info("app exit now by force...")
-			})
-
-			// 要么fastFailTimeout时间内执行完毕下面的逻辑然后程序退出，要么执行上面的超时函数程序强行退出
-			uninitServer()
-			// fmt.Println("app exit now...")
-			log.Info("app exit now...")
-			return
-		}
-	}
+	return
 }
+
+// It is not possible to block SIGKILL or syscall.SIGSTOP
+
+// reload()
+
+// log.Warn("app exit now by force...")
+// os.Exit(1)
+
+// 要么fastFailTimeout时间内执行完毕下面的逻辑然后程序退出，要么执行上面的超时函数程序强行退出
+
+// fmt.Println("app exit now...")

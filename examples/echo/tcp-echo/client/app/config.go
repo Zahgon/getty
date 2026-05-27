@@ -18,18 +18,7 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"path"
 	"time"
-)
-
-import (
-	yaml "gopkg.in/yaml.v2"
-)
-
-import (
-	log "github.com/AlexStocks/getty/util"
 )
 
 const (
@@ -95,68 +84,10 @@ type (
 	}
 )
 
-func initConf() {
-	var (
-		err      error
-		confFile string
-	)
+func initConf() { _ = "STUB: not implemented"; return }
 
-	// configure
-	confFile = os.Getenv(APP_CONF_FILE)
-	if confFile == "" {
-		panic("application configure file name is nil")
-	}
-	if path.Ext(confFile) != ".yml" {
-		panic(fmt.Sprintf("application configure file name{%v} suffix must be .yml", confFile))
-	}
+// configure
 
-	conf = &Config{}
-	confFileStream, err := os.ReadFile(confFile)
-	if err != nil {
-		panic(fmt.Sprintf("os.ReadFile(file:%s) = error:%s", confFile, err))
-	}
-	err = yaml.Unmarshal(confFileStream, conf)
-	if err != nil {
-		panic(fmt.Sprintf("yaml.Unmarshal() = error:%s", err))
-	}
+// gxlog.CInfo("config{%#v}\n", conf)
 
-	conf.heartbeatPeriod, err = time.ParseDuration(conf.HeartbeatPeriod)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(HeartbeatPeriod{%#v}) = error{%v}", conf.HeartbeatPeriod, err))
-	}
-	conf.sessionTimeout, err = time.ParseDuration(conf.SessionTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(SessionTimeout{%#v}) = error{%v}", conf.SessionTimeout, err))
-	}
-	conf.failFastTimeout, err = time.ParseDuration(conf.FailFastTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(FailFastTimeout{%#v}) = error{%v}", conf.FailFastTimeout, err))
-	}
-	conf.GettySessionParam.keepAlivePeriod, err = time.ParseDuration(conf.GettySessionParam.KeepAlivePeriod)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(KeepAlivePeriod{%#v}) = error{%v}", conf.GettySessionParam.KeepAlivePeriod, err))
-	}
-	conf.GettySessionParam.tcpReadTimeout, err = time.ParseDuration(conf.GettySessionParam.TcpReadTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(TcpReadTimeout{%#v}) = error{%v}", conf.GettySessionParam.TcpReadTimeout, err))
-	}
-	conf.GettySessionParam.tcpWriteTimeout, err = time.ParseDuration(conf.GettySessionParam.TcpWriteTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(TcpWriteTimeout{%#v}) = error{%v}", conf.GettySessionParam.TcpWriteTimeout, err))
-	}
-	conf.GettySessionParam.waitTimeout, err = time.ParseDuration(conf.GettySessionParam.WaitTimeout)
-	if err != nil {
-		panic(fmt.Sprintf("time.ParseDuration(WaitTimeout{%#v}) = error{%v}", conf.GettySessionParam.WaitTimeout, err))
-	}
-	// gxlog.CInfo("config{%#v}\n", conf)
-
-	// log
-	confFile = os.Getenv(APP_LOG_CONF_FILE)
-	if confFile == "" {
-		panic("log configure file name is nil")
-	}
-	if path.Ext(confFile) != ".xml" {
-		panic(fmt.Sprintf("log configure file name{%v} suffix must be .xml", confFile))
-	}
-	log.Info("config{%#v}", conf)
-}
+// log
